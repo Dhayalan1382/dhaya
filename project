@@ -1,0 +1,303 @@
+from tabulate import tabulate
+import mysql.connector
+con=mysql.connector.connect(host="localhost",user="root",password="951495",database="bigproject")
+def check():
+    res=con.cursor()
+    sql="select customer_id from customer1"
+    res.execute(sql)
+    result=res.fetchall()
+    lis_of_ids= []
+    for i in result:
+        lis_of_ids.append(i[0])
+    return lis_of_ids
+def customer_account():
+    try:
+        res=con.cursor()
+        sql="select customer_id from customer1"
+        res.execute(sql)
+        result=res.fetchall()
+        lis_of_ids= []
+        for i in result:
+            lis_of_ids.append(i[0])
+            print(lis_of_ids)
+        customer_id=input("enter your customer id: ")
+        if customer_id in lis_of_ids:
+            print("you already customer")                
+        else:
+            customer_firstname=input("enter your first name: ")
+            customer_lastname=input("enter your last name: ")
+            customer_phonenumber=int(input("enter your phone number: "))
+            customer_address=input("enter your address: ")
+            booked_products=input("enter your booked product: ")
+            sql="insert into customer1 (customer_id,customer_first_name,customer_last_name,customer_phonenumber,customer_address,booked_products) values (%s,%s,%s,%s,%s,%s)"
+            values=(customer_id,customer_firstname,customer_lastname,customer_phonenumber,customer_address,booked_products)
+            res.execute(sql,values)
+            con.commit()
+            print("***********************************")
+            print("insert data success")
+            print("***********************************")
+    except Exception:
+        print("incorrect id")
+def get_booked_products(customer_id): 
+    res=con.cursor()
+    sql="select booked_products from customer1 where customer_id=%s"
+    values=(customer_id,)
+    res.execute(sql,values)
+    result=res.fetchall()
+    pro_bk=""
+    for i in result:
+        pro_bk = pro_bk+i[0]+"_"
+    return pro_bk
+def sign_in():
+    try:
+        res=con.cursor()
+        sql="select customer_id from customer1"
+        res.execute(sql)
+        result=res.fetchall()
+        lis_of_ids= []
+        for i in result:
+            lis_of_ids.append(i[0])
+        customer_id=input("enter your id:")
+        if customer_id in lis_of_ids:
+            ch="yes"
+            while ch=="yes":
+                print("what do you want like to do?\n1.view booking\n2.book_product\n3.update your deatails\n4.cancel booked product:")
+                y=int(input("enter your choice: "))
+                if y==1:
+                    pr=get_booked_products(customer_id)
+                    print(pr)
+                elif y==2:
+                    view_product()
+                    res=con.cursor()
+                    prod_name = input("enter the prod name ")
+                    pr=get_booked_products(customer_id)
+                    if pr is None or pr == "":
+                        booked_products = pr+"_"
+                    else:
+                        booked_products = pr+prod_name
+                    sql="update customer1 set booked_products=%s where customer_id=%s"
+                    values=(booked_products,customer_id)
+                    res.execute(sql,values)
+                    con.commit()
+                elif y==3:
+                    try:
+                        ch="yes"
+                        while ch=="yes":
+                            print("what to you want edit do:\n1.first_name\n2.last_name\n3.phonenumber\n4.address")
+                            user=int(input("enter your choice: "))
+                            if user==1:
+                                customer_first_name=input("enter your new first name: ")
+                                res=con.cursor()
+                                sql="update customer1 set customer_first_name=%s where customer_id=%s"
+                                values=(customer_first_name,customer_id)
+                                res.execute(sql,values)
+                                con.commit()
+                                print("updated your first_name successfully")
+                            elif user==2:
+                                customer_last_name=input("enter your new last_name: ")
+                                res=con.cursor()
+                                sql="update customer1 set customer_last_name=%s where customer_id=%s"
+                                values=(customer_last_name,customer_id)
+                                res.execute(sql,values)
+                                con.commit()
+                                print("updated your last_name successfully")
+                            elif user==3:
+                                customer_phonenumber=int(input("enter your new phonenumber: "))
+                                res=con.cursor()
+                                sql="update customer1 set customer_phonenumber=%s where customer_id=%s"
+                                values=(customer_phonenumber,customer_id)
+                                res.execute(sql,values)
+                                con.commit()
+                                print("updated your phone_number successfully")
+                            elif user==4:
+                                customer_address=input("enter your new address: ")
+                                res=con.cursor()
+                                sql="update customer1 set customer_address=%s where customer_id=%s"
+                                values=(customer_address,customer_id)
+                                res.execute(sql,values)
+                                con.commit()
+                                print("updated your address successfully")
+                    except Exception:
+                        print("valid input............")
+                elif y==4:
+                    try:
+                        customer_id=input("enter your id: ")
+                        print("1.delete your whole booking\n2.delete your selected products")
+                        user=int(input("enter your choice: "))
+                        if user==1:
+                            res=con.cursor()
+                            sql="delete from customer1 where customer_id=%s"
+                            values=(customer_id,)
+                            res.execute(sql,values)
+                            con.commit()
+                            print('data delete success')
+                        elif user==2:
+                            pr=get_booked_products(customer_id)
+                            print(pr)
+                            prod_name = input("enter the cancel product name ")
+                            if pr is None or pr == "":
+                                print("the product id is not yours")
+                            else:
+                                v = pr.split("_")
+                                v.remove(prod_name)
+                                v.remove("")
+                                booked_products=""
+                                for i in v:
+                                    booked_products = booked_products+i
+                                res=con.cursor()
+                                sql="update customer1 set booked_products=%s where customer_id=%s"
+                                values=(booked_products,customer_id)
+                                res.execute(sql,values)
+                                con.commit()
+                                print("************************************")
+                                print("update successfully")
+                                print("************************************")
+                    except Exception:
+                        print("valid input...........")
+            ch=input("do you want continue: ")
+        else:
+            print("enter valid id...............")
+    except Exception:
+        print("valid input............")
+def view_product():
+    res=con.cursor()
+    sql="select product_name from products"
+    res.execute(sql)
+    result=res.fetchall()
+    lis_of_ids= []
+    for i in result:
+        lis_of_ids.append(i[0])
+    print("list_of_books=",lis_of_ids)  
+def add_products():
+    view_product()
+    n=int(input("how many produts to you want add: "))
+    for i in range(n):
+        res=con.cursor()
+        product_id=input("enter product_id: ")
+        product_name=input("enter product_name: ")
+        product_price=int(input("enter product_price: "))
+        product_stock=int(input("enter your product stock: "))
+        sql="insert into products (product_id,product_name,product_price,product_stock) values (%s,%s,%s,%s)"
+        values=(product_id,product_name,product_price,product_stock)
+        res.execute(sql,values)
+        con.commit()
+        print("***************************************")
+        print("product add from products data")
+        print("****************************************")
+def delete_product():
+    view_product()
+    n=int(input("how many produts to you want delete: "))
+    for i in range(n):
+        res=con.cursor()
+        product_id=input("enter product_id: ")
+        sql="delete from products where product_id=%s"
+        values=(product_id,)
+        res.execute(sql,values)
+        con.commit()
+        print("***************************************")
+        print("product remove from products data")
+        print("****************************************")
+def employee_sign_in():
+    res=con.cursor()
+    sql="select employee_id from employee"
+    res.execute(sql)
+    result=res.fetchall()
+    lis_of_ids= []
+    for i in result:
+        lis_of_ids.append(i[0])
+    a=input("enter your employee id: ")
+    if a in lis_of_ids:
+        print("1.update delivered products\n2.add a new products\n3.delete a existing products\n4.back")
+        ch="yse"
+        while ch=="yes":
+            user=int(input("enter your choice: "))
+            if user==1:
+                customer_id=int(input("enter our customer id: "))
+                pr=get_booked_products(customer_id)
+                c=int(input("enter how many products delivered in customter: "))
+                for i in range(c):
+                    delivered_products=input("entered delivered products name: ")
+                    v = pr.split("_")
+                    v.remove(delivered_products)
+                    v.remove("")
+                    booked_products=""
+                    for i in v:
+                        booked_products = booked_products+i
+                        res=con.cursor()
+                        sql="update customer1 set booked_products=%s where customer_id=%s"
+                        values=(booked_products,customer_id)
+                        res.execute(sql,values)
+                        con.commit()
+                        print("************************************")
+                        print("delivered status update")
+                        print("************************************")     
+            elif user==2:
+                add_products()
+            elif user==3:
+                delete_product()
+            elif user==4:
+                print("thank you for visiting!.............")
+    else:
+        print("enter your correct emplyee id")
+        ch=input("do you want continue yes/no: ")
+def add_epmloyee():
+    res=con.cursor()
+    sql="select employee_id from employee"
+    res.execute(sql)
+    result=res.fetchall()
+    lis_of_ids=[]
+    for i in result:
+        lis_of_ids.append(i[0])
+    print("*******************************")
+    print(tabulate(result,headers=["employee_id"]))
+    print("*******************************")
+    a=input("enter your verify your employee id: ")
+    if a in lis_of_ids:
+        c=int(input("how many employee you want to add: "))
+        for i in range(c):
+            employee_id=input("enter our employee id: ")
+            employee_name=input("enter our employee_name: ")
+            employee_address=input("enter our employee _adress: ")
+            employee_age=int(input("enter your employee_age: "))
+            res=con.cursor()
+            sql="insert into employee (employee_id,employee_name,employee_address,employee_age) values(%s,%s,%s,%s)"
+            values=(employee_id,employee_name,employee_address,employee_age)
+            res.execute(sql,values)
+            con.commit()
+            print("*************************************")
+            print("employee insert success")
+            print("*************************************")            
+def employer():
+    ch="yes"
+    while ch=="yes":
+        print("1.view product details\n2.add employee")
+        user=int(input("enter your choice: "))
+        if user==1:
+            view_product()
+        elif user==2:
+            add_epmloyee()
+        ch=input("do you want continue: ")
+ch="yes"
+while ch=="yes":
+    print("""Are You a :\n(A).Customer\n(B).Employee\n(c).Employer\nEnter e To Exit""")
+    choice=input("enter your choice: ")
+    try:
+        if choice in "aA":
+            print("1.create account\n2.sign in into existing account")
+            choice1=int(input("enter your choice: "))
+            if choice1==1:
+                customer_account()
+            elif choice1==2:
+                sign_in()
+            else:
+                print("enter correct choice")
+        if choice in "bB":
+            employee_sign_in()
+        if choice in "cC":
+            employer()
+        elif choice.lower()=="e":
+            print("thank you for visiting!.............")
+            break
+    except exception:
+        print("give the right output")
+    #ch=input("do you want continue yes/no: ")
